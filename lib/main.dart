@@ -103,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
           // action in the IDE, or press "p" in the console), to see the
           // wireframe for each widget.
           mainAxisAlignment: .center,
-          children: [
+          children: <Widget>[
             const Text('You have pushed the button this many times:'),
             Text(
               '$_counter',
