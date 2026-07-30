@@ -6,6 +6,7 @@ import 'package:datavault_pro/presentation/controllers/security_controller.dart'
 import 'package:datavault_pro/presentation/controllers/vault_controller.dart';
 import 'package:datavault_pro/presentation/screens/home_screen.dart';
 import 'package:datavault_pro/presentation/screens/security_screen.dart';
+import 'package:datavault_pro/presentation/screens/widgets/privacy_shield.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -48,8 +49,41 @@ class DataVaultApp extends StatefulWidget {
   State<DataVaultApp> createState() => _DataVaultAppState();
 }
 
-class _DataVaultAppState extends State<DataVaultApp> {
+class _DataVaultAppState extends State<DataVaultApp>
+    with WidgetsBindingObserver {
   int _currentIndex = 0;
+  bool _isPrivacyShieldActive = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Registrar el observador del ciclo de vida del sistema
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    // Remover el observador para evitar fugas de memoria
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // Reto 1: Imprimir en consola los cambios de estado
+    debugPrint('Lifecycle State Changed: $state');
+
+    // Nivel Intermedio: Bloquear la UI si la app no está en primer plano
+    final bool shouldHideContent = state != AppLifecycleState.resumed;
+
+    if (_isPrivacyShieldActive != shouldHideContent) {
+      setState(() {
+        _isPrivacyShieldActive = shouldHideContent;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +102,13 @@ class _DataVaultAppState extends State<DataVaultApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
       ),
+      builder: (BuildContext context, Widget? child) {
+        // Envolvemos toda la aplicación en el escudo de privacidad
+        return PrivacyShield(
+          isShieldActive: _isPrivacyShieldActive,
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: Scaffold(
         body: screens[_currentIndex],
         bottomNavigationBar: BottomNavigationBar(
