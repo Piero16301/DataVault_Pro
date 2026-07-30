@@ -1,0 +1,64 @@
+name: DataVault Pro CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  lint_and_test:
+    name: Lint, Test & Sonar Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout del código fuente
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: ☕ Configurar Java JDK (Requerido por SonarScanner)
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: 🐦 Configurar Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: 📦 Obtener dependencias
+        run: flutter pub get
+      - name: 🔍 Verificar calidad de código (Linter estricto)
+        run: flutter analyze
+      - name: 🧪 Ejecutar pruebas unitarias con cobertura
+        run: flutter test --coverage
+      - name: Ejecutar Sonar Scan (SonarCloud)
+        uses: SonarSource/sonarqube-scan-action@v8.2.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  build_apk:
+    name: Build APK
+    needs: lint_and_test
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout del código fuente
+        uses: actions/checkout@v4
+      - name: ☕ Configurar Java JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+      - name: 🐦 Configurar Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+      - name: 📦 Obtener dependencias
+        run: flutter pub get
+      - name: 🔨 Compilar APK de producción (Release)
+        run: flutter build apk --release
+      - name: 🚀 Subir APK como artefacto de GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: datavault-pro-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
